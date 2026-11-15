@@ -9,10 +9,12 @@
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Refund Workflow — Phase 0</name>
-    <description>Java-only compatibility spike for LangGraph4j and LangChain4j Agentic.</description>
+    <name>Refund Workflow</name>
+    <description>Java-only, code-first reference implementation using LangGraph4j and LangChain4j Agentic.</description>
 
     <modules>
+        <module>refund-domain</module>
+        <module>refund-application</module>
         <module>refund-phase0-spike</module>
     </modules>
 

@@ -11,7 +11,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -28,16 +28,19 @@ jobs:
           java -version
           ./mvnw --version
 
-      - name: Build and test
+      - name: Verify architecture boundaries
+        run: bash scripts/check-core-boundaries.sh
+
+      - name: Build and test all modules
         run: ./mvnw -B --no-transfer-progress clean verify
 
-      - name: Inspect resolved framework dependencies
+      - name: Inspect framework dependency resolution
         run: ./mvnw -B --no-transfer-progress -pl refund-phase0-spike dependency:tree -Dincludes=org.bsc.langgraph4j:*,dev.langchain4j:*
 
-      - name: Upload test reports
+      - name: Upload all test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase0-test-reports
+          name: refund-workflow-test-reports
           path: '**/target/surefire-reports/*.txt'
           if-no-files-found: ignore

@@ -1,33 +1,53 @@
-# Refund Workflow — Phase 0 compatibility spike
+# Refund Workflow
 
-Java-only code-first reference project using **LangGraph4j** and **LangChain4j**, including the experimental `langchain4j-agentic` module.
+Java-only, code-first reference implementation using LangGraph4j and LangChain4j, including the experimental LangChain4j Agentic module.
 
-This phase proves a narrow technical seam before any refund business domain is implemented:
+## Toolchain
 
-1. A declarative LangChain4j `@Agent` interface is created using a deterministic fake `ChatModel`.
-2. Two agents execute in a LangChain4j Agentic sequential workflow.
-3. A three-node LangGraph4j graph (`prepare` → `agentic-review` → `finish`) invokes that workflow.
-4. The explicit `finish` node appends a final lifecycle event; the graph returns all three events and the Agentic result.
+- Java 21
+- Maven Wrapper (Maven 3.9.11)
+- LangGraph4j 1.9.9
+- LangChain4j 1.23.0
+- LangChain4j Agentic 1.23.0-beta33
 
-No Python, no other agent framework, no model API key and no real refund gateway are used.
+Framework versions remain pinned in the parent POM. The Phase 0 CI build confirmed the compatibility spike and its deterministic integration tests.
 
-## Requirements
+## Reactor modules
 
-- JDK 21
-- Network access to Maven Central on first wrapper/build run
+| Module | Responsibility | Framework dependency |
+|---|---|---|
+| `refund-domain` | Refund domain model, money value object and pure eligibility policy | None |
+| `refund-application` | Refund use case, application result and outbound query ports | Domain only |
+| `refund-phase0-spike` | Proven LangGraph4j-to-LangChain4j-Agentic integration | LangGraph4j + LangChain4j |
 
-## Run
+The domain and application modules must remain independent of orchestration and model frameworks. Framework-specific adapters will be introduced in later phases, outside the domain/application core.
+
+## Phase 1 scope
+
+Phase 1 implements read-only refund eligibility evaluation. A positive eligibility decision means **eligible to enter approval**, not approved and not authorized for execution. No payment or refund mutation is performed in this phase.
+
+The deterministic policy:
+
+- verifies payment and customer references;
+- requires a captured payment (a disputed payment routes to manual review);
+- validates currency consistency;
+- counts pending and successful refunds against the refundable balance;
+- excludes failed and cancelled refunds from the reserved balance;
+- refuses to infer a safe balance from inconsistent refund history;
+- routes duplicate request identifiers and suspected fraud to manual review;
+- rejects payments already fully refunded.
+
+The policy does not reserve funds. Atomic reservation and idempotent execution belong to the later execution phase.
+
+## Build and verification
 
 ```bash
+bash scripts/check-core-boundaries.sh
 ./mvnw -B --no-transfer-progress clean verify
 ```
 
-Run `Phase0Application` from an IDE after the test suite passes. It uses deterministic fake `ChatModel` implementations and requires no provider credentials.
+CI runs both checks, then inspects the resolved LangGraph4j/LangChain4j dependency tree and uploads Surefire reports.
 
-## Version decision
+## Development rule
 
-See [ADR-0001](docs/adr/0001-phase0-framework-version-alignment.md). The candidate version pair is based on the LangGraph4j 1.9.9 POM and LangChain4j Agentic 1.23.0-beta33 POM. It is not considered verified until the clean build and integration tests pass.
-
-## Status
-
-See [Phase 0 status](docs/phase0/PHASE0-STATUS.md). The first GitHub Actions run compiled the source and ran both tests, but one assertion failed because the graph had no explicit terminal `finish` node. The source is corrected to route `agentic-review` → `finish` → `END`. The authoring container cannot rerun Maven because Maven is absent and outbound DNS is unavailable. Do not treat Phase 0 as complete until the corrected CI run is green.
+Implementation and tests precede chapter prose. Each increment must build and pass its acceptance criteria in CI before its corresponding chapter is written.
