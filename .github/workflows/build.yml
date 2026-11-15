@@ -31,6 +31,9 @@ jobs:
       - name: Build and test
         run: ./mvnw -B --no-transfer-progress clean verify
 
+      - name: Inspect resolved framework dependencies
+        run: ./mvnw -B --no-transfer-progress -pl refund-phase0-spike dependency:tree -Dincludes=org.bsc.langgraph4j:*,dev.langchain4j:*
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4

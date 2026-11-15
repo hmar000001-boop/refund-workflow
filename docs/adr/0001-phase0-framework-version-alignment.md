@@ -34,9 +34,9 @@ This is a strong alignment signal from the two projects' own Maven metadata, but
 Use the candidate versions in Phase 0 only. Do not call them a verified compatible baseline until all of the following pass from a clean checkout:
 
 1. `./mvnw -B clean verify` resolves and compiles every dependency.
-2. The LangGraph4j two-node graph test passes.
+2. The LangGraph4j three-node graph test passes (`prepare` → `agentic-review` → `finish` → `END`).
 3. The LangChain4j Agentic sequential composition test passes with deterministic `ChatModel` implementations and no provider credentials.
-4. A LangGraph4j node invokes the Agentic workflow and the final graph state contains the expected result.
+4. A LangGraph4j node invokes the Agentic workflow, the explicit `finish` node runs, and the final graph state contains the expected result and lifecycle events.
 5. `./mvnw dependency:tree` is inspected for accidental version mediation or duplicate incompatible LangChain4j artifacts.
 
 If the tests fail, isolate the incompatibility and test the maintained LangGraph4j 1.8.x line before changing the LangChain4j pair. Do not add exclusions or overrides without a reproducible reason and regression test.

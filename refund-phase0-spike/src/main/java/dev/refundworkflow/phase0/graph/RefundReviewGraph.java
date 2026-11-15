@@ -13,7 +13,7 @@ import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
-/** Builds a two-node LangGraph4j workflow whose second node invokes LangChain4j Agentic. */
+/** Builds a three-node LangGraph4j workflow; its middle node invokes LangChain4j Agentic. */
 public final class RefundReviewGraph {
 
     private RefundReviewGraph() {
@@ -31,12 +31,17 @@ public final class RefundReviewGraph {
                 Phase0GraphState.REVIEW, refundReview.review(state.request())
         );
 
+        NodeAction<Phase0GraphState> finish = state ->
+                Map.of(Phase0GraphState.EVENTS, "graph-finished");
+
         return new StateGraph<>(Phase0GraphState.SCHEMA, Phase0GraphState::new)
                 .addNode("prepare", node_async(prepare))
                 .addNode("agentic-review", node_async(agenticReview))
+                .addNode("finish", node_async(finish))
                 .addEdge(START, "prepare")
                 .addEdge("prepare", "agentic-review")
-                .addEdge("agentic-review", END)
+                .addEdge("agentic-review", "finish")
+                .addEdge("finish", END)
                 .compile();
     }
 }
